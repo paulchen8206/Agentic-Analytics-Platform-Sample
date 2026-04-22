@@ -1,0 +1,26 @@
+.DS_Store
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Node
+frontend/node_modules/
+frontend/build/
+
+# Local data
+data/uploads/
+.venv/
+.uv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+node_modules/
+frontend/build/
+data/uploads/
+*.egg-info/
+.DS_Store
+dist/

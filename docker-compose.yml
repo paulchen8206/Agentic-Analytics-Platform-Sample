@@ -1,0 +1,74 @@
+services:
+  # -------------------------------------------------------
+  # Ollama — local LLM runtime
+  # -------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: app-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    healthcheck:
+      # The upstream image does not include curl, so use the bundled CLI.
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # -------------------------------------------------------
+  # Backend — FastAPI
+  # -------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: app-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # -------------------------------------------------------
+  # Frontend — React (served via nginx)
+  # -------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    container_name: app-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # -------------------------------------------------------
+  # Tests — one-off runner using project-mounted source
+  # -------------------------------------------------------
+  tests:
+    image: python:3.12.11-slim-bookworm
+    container_name: app-tests
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: >
+      sh -lc "
+      pip install --no-cache-dir uv &&
+      uv sync --frozen &&
+      uv run pytest tests/ -q
+      "
+    profiles:
+      - test
+
+volumes:
+  ollama_data:
