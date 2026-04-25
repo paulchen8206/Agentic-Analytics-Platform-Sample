@@ -1,4 +1,4 @@
-# Simple Agentic Analytics Platform
+# Agentic Analytics Platform Sample
 
 > Turn data into insights with agentic AI powered by **Ollama** — running entirely on your local machine.
 
